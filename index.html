@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tambola Host</title>
+  <style>
+    :root{
+      --bg:#0b0d10;--panel:#14181d;--panel2:#1b2027;--text:#f5f7fa;
+      --muted:#98a2ad;--accent:#f7c948;--accent2:#ffd86b;--danger:#ff5d5d;
+      --success:#35d07f;--border:#2a313a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#080a0c,#10151b);color:var(--text)}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{min-height:100vh;display:grid;grid-template-columns:250px 1fr}
+    aside{background:#0a0c0f;border-right:1px solid var(--border);padding:22px 16px;position:sticky;top:0;height:100vh}
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:28px}
+    .logo{width:44px;height:44px;border-radius:14px;background:var(--accent);display:grid;place-items:center;color:#111;font-weight:900;font-size:22px}
+    .brand h1{font-size:18px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px}
+    .nav button{width:100%;text-align:left;background:transparent;border:0;color:#cfd5dc;padding:12px 13px;border-radius:10px;margin:3px 0}
+    .nav button.active,.nav button:hover{background:#191f26;color:#fff}
+    main{padding:24px;min-width:0}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
+    .topbar h2{margin:0;font-size:25px}.topbar .status{display:flex;align-items:center;gap:8px;color:var(--muted)}
+    .dot{width:9px;height:9px;border-radius:50%;background:var(--success);box-shadow:0 0 12px var(--success)}
+    .grid{display:grid;grid-template-columns:minmax(420px,.85fr) minmax(680px,1.15fr);gap:18px;align-items:start}
+    .card{background:rgba(20,24,29,.96);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
+    .card h3{margin:0 0 14px;font-size:16px}
+    .caller{text-align:center;padding:28px 20px}
+    .current-number{width:170px;height:170px;margin:8px auto 18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe58c,var(--accent));display:grid;place-items:center;color:#111;font-size:72px;font-weight:900;box-shadow:0 0 45px rgba(247,201,72,.28)}
+    .caller-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+    .btn{border:1px solid var(--border);background:#20262e;color:white;border-radius:11px;padding:11px 16px;font-weight:700}
+    .btn:hover{filter:brightness(1.08)}
+    .btn-primary{background:var(--accent);color:#151515;border-color:var(--accent)}
+    .btn-danger{background:#34191c;border-color:#612a30;color:#ff9a9a}
+    .btn-success{background:#153424;border-color:#236344;color:#8ff0b6}
+    .board{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+    .num{aspect-ratio:1;border-radius:9px;border:1px solid #303842;background:#11151a;display:grid;place-items:center;font-size:14px;font-weight:750;color:#aeb7c1}
+    .num.called{background:var(--accent);color:#141414;border-color:var(--accent);box-shadow:0 0 12px rgba(247,201,72,.22)}
+    .history{display:flex;flex-wrap:wrap;gap:7px;min-height:40px}
+    .history span{background:#222932;border:1px solid #303842;padding:7px 10px;border-radius:9px;font-weight:700}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+    .stat{padding:15px}.stat p{margin:0;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:24px;margin-top:7px}
+    .section{display:none}.section.active{display:block}
+    .form-row{display:flex;gap:10px;flex-wrap:wrap}
+    input,select{background:#0f1318;border:1px solid var(--border);color:#fff;padding:11px 12px;border-radius:10px;outline:none}
+    input:focus,select:focus{border-color:#6e633a}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+    th{color:#9ca7b3;font-size:12px}
+    .badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;background:#202730}
+    .claim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+    .claim-item{border:1px solid var(--border);border-radius:14px;padding:14px;background:#11151a}
+    .claim-item strong{display:block;margin-bottom:7px}
+    .claim-item small{color:var(--muted)}
+    .claim-item button{margin-top:11px;width:100%}
+    .winner{color:#87e7ad}
+    .muted{color:var(--muted)}
+    .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px}
+    .field label{display:block;color:#aeb7c1;font-size:13px;margin-bottom:7px}.field input{width:100%}
+
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999;align-items:center;justify-content:center;padding:20px}
+    .modal.show{display:flex}
+    .modal-box{width:min(760px,100%);max-height:90vh;overflow:auto;background:#14181d;border:1px solid var(--border);border-radius:18px;padding:18px}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+
+    .claim-board-layout{
+      display:grid;
+      grid-template-columns:minmax(300px,.85fr) minmax(360px,1.15fr);
+      gap:22px;
+      align-items:start;
+      min-width:0;
+    }
+    .claim-board-layout > div{min-width:0}
+    .claim-board-layout .board{
+      grid-template-columns:repeat(10,minmax(24px,1fr));
+      gap:5px;
+      width:100%;
+    }
+    .claim-board-layout .num{
+      min-width:0;
+      font-size:12px;
+      border-radius:7px;
+    }
+    .claim-ticket-inline{
+      border-left:1px solid var(--border);
+      padding-left:20px;
+      min-width:0;
+      overflow:hidden;
+    }
+    .claim-ticket-inline > div:first-child{
+      display:grid!important;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:start!important;
+    }
+    .claim-ticket-inline h3{font-size:18px;line-height:1.2}
+    #inlineClaimMeta{
+      margin-top:5px;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+    #inlineClaimStatus{white-space:nowrap}
+    .claim-ticket-inline .ticket-card{
+      padding:10px;
+      width:100%;
+      overflow:hidden;
+    }
+    .claim-ticket-inline .ticket-title{
+      font-size:16px;
+      margin-bottom:8px;
+    }
+    .claim-ticket-inline .tambola-ticket{
+      width:100%;
+      table-layout:fixed;
+    }
+    .claim-ticket-inline .tambola-ticket td{
+      height:36px;
+      font-size:14px;
+      padding:0;
+    }
+    .claim-ticket-empty{color:var(--muted);padding:22px 8px;text-align:center}
+    @media(max-width:1250px){
+      .grid{grid-template-columns:1fr}
+      .claim-board-layout{grid-template-columns:minmax(280px,.9fr) minmax(340px,1.1fr)}
+    }
+    @media(max-width:760px){
+      .claim-board-layout{grid-template-columns:1fr}
+      .claim-ticket-inline{
+        border-left:0;
+        border-top:1px solid var(--border);
+        padding-left:0;
+        padding-top:16px;
+      }
+    }
+
+    .ticket-card{background:#fff;color:#111;border-radius:14px;padding:14px;overflow:auto}
+    .ticket-title{font-weight:900;margin-bottom:10px;text-align:center}
+    .tambola-ticket{width:100%;border-collapse:collapse;table-layout:fixed}
+    .tambola-ticket td{border:2px solid #111;height:48px;text-align:center;font-weight:900;font-size:18px;background:#fff;color:#111;padding:0}
+    .tambola-ticket td.blank{background:#e9ecef;color:transparent}
+
+
+    .manual-pick-panel{margin-top:18px}
+    .pick-board{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+    .pick-num{min-height:42px;border-radius:9px;border:1px solid #303842;background:#11151a;color:#f5f7fa;font-weight:800}
+    .pick-num:hover{border-color:var(--accent);background:#1d2126}
+    .pick-num.used{background:#32373d;color:#737b84;border-color:#3c434b;text-decoration:line-through;cursor:not-allowed}
+    .pick-num:disabled{opacity:.55;cursor:not-allowed}
+    .claim-alert-list{display:grid;gap:10px}
+    .claim-alert{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:13px;background:#11151a}
+    .claim-alert .meta{font-size:12px;color:var(--muted);margin-top:4px}
+    .claim-alert .prize{font-weight:900;color:var(--accent2)}
+    .claim-status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-left:6px}
+    .claim-status.pending{background:#3a3217;color:#ffe28a}
+    .claim-status.approved{background:#153424;color:#8ff0b6}
+    .claim-status.rejected{background:#34191c;color:#ff9a9a}
+    .claim-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+    .claim-editor{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:10px}
+    .claim-editor input{width:100%}
+    @media(max-width:600px){.claim-editor{grid-template-columns:1fr}}
+    @media(max-width:600px){
+      .pick-board{grid-template-columns:repeat(6,1fr)}
+      .claim-alert{grid-template-columns:1fr}
+      .claim-actions{justify-content:flex-start}
+    }
+
+    .mobile-menu{display:none}
+    @media(max-width:900px){
+      .app{display:block}aside{height:auto;position:static;border-right:0;border-bottom:1px solid var(--border);padding:12px 16px}
+      .brand{margin:0}.nav{display:flex;overflow:auto;margin-top:10px}.nav button{white-space:nowrap;width:auto}
+      main{padding:16px}.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}
+      .current-number{width:145px;height:145px;font-size:62px}.board{gap:4px}.num{font-size:11px;border-radius:6px}
+    }
+  
+    #claimTypeEditor .claim-editor{
+      display:grid;
+      grid-template-columns:minmax(180px,1.7fr) minmax(140px,.9fr) auto auto;
+      gap:10px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    #claimTypeEditor .claim-editor input{min-width:0}
+    @media(max-width:760px){
+      #claimTypeEditor .claim-editor{grid-template-columns:1fr}
+      #claimTypeEditor .claim-editor > *{width:100%}
+    }
+
+</style>
+
+<style>
+/* ===== Premium Tambola UI 2026 — visual override only ===== */
+:root{
+  --bg:#05070b !important;
+  --panel:#0d121a !important;
+  --panel2:#121a25 !important;
+  --text:#f7f9fc !important;
+  --muted:#8e9aad !important;
+  --accent:#f4c542 !important;
+  --accent2:#ffe084 !important;
+  --danger:#ff5f6d !important;
+  --success:#38d996 !important;
+  --border:#202b39 !important;
+  --blue:#5aa7ff !important;
+  --shadow:0 18px 55px rgba(0,0,0,.34);
+  --ring:0 0 0 3px rgba(244,197,66,.13);
+}
+html{background:#05070b;color-scheme:dark}
+body{
+  background:
+    radial-gradient(circle at 12% -10%,rgba(244,197,66,.12),transparent 30%),
+    radial-gradient(circle at 100% 0%,rgba(90,167,255,.09),transparent 28%),
+    linear-gradient(145deg,#05070b 0%,#080d14 48%,#060910 100%) !important;
+  background-attachment:fixed;
+  color:var(--text) !important;
+  letter-spacing:.01em;
+}
+::selection{background:rgba(244,197,66,.32);color:#fff}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:#070b11}
+::-webkit-scrollbar-thumb{background:#263344;border-radius:999px;border:2px solid #070b11}
+::-webkit-scrollbar-thumb:hover{background:#35465c}
+.card,.loginbox,.modal-box{
+  background:linear-gradient(145deg,rgba(18,25,35,.95),rgba(10,15,23,.96)) !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  box-shadow:var(--shadow) !important;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.card{border-radius:20px !important}
+.logo{
+  background:linear-gradient(145deg,#ffe586,#eebd31) !important;
+  color:#17120a !important;
+  box-shadow:0 8px 24px rgba(244,197,66,.2),inset 0 1px 0 rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.28);
+}
+.brand h1{font-weight:900;letter-spacing:-.02em}
+.muted{color:var(--muted) !important}
+.btn{
+  min-height:42px;
+  border-radius:12px !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  background:linear-gradient(180deg,#1b2532,#151d28) !important;
+  color:#f7f9fc !important;
+  box-shadow:0 7px 18px rgba(0,0,0,.18);
+  transition:transform .16s ease,filter .16s ease,border-color .16s ease,box-shadow .16s ease !important;
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08);border-color:#3b4a5e !important}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn-primary{
+  background:linear-gradient(135deg,#ffe180,#efbc2e) !important;
+  border-color:#f4c542 !important;color:#17120a !important;
+  box-shadow:0 10px 25px rgba(244,197,66,.18) !important;
+}
+.btn-success{background:linear-gradient(135deg,#14382b,#18513b) !important;border-color:#267251 !important;color:#a8f3ce !important}
+.btn-danger{background:linear-gradient(135deg,#351a20,#491d25) !important;border-color:#71303a !important;color:#ffadb5 !important}
+input,select{
+  background:#090e15 !important;
+  border:1px solid #263343 !important;
+  color:#f7f9fc !important;
+  border-radius:12px !important;
+  min-height:44px;
+  transition:border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+input:focus,select:focus{border-color:#9b8132 !important;box-shadow:var(--ring) !important;background:#0b111a !important;outline:none}
+input::placeholder{color:#657287}
+.badge,.status-pill{
+  background:linear-gradient(180deg,#151e29,#101720) !important;
+  border:1px solid #273445 !important;
+  color:#dce3ed !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+table{border-spacing:0}
+th{color:#94a1b5 !important;text-transform:uppercase;letter-spacing:.055em;font-weight:800}
+tbody tr{transition:background .15s ease}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+th,td{border-bottom-color:#202b39 !important}
+.dot.ok,.dot.live,.dot{transition:.2s ease}
+
+aside{background:linear-gradient(180deg,rgba(7,10,15,.98),rgba(9,13,20,.98)) !important;border-right:1px solid #1f2a37 !important;box-shadow:12px 0 34px rgba(0,0,0,.12)}
+.nav button{min-height:44px;border-radius:12px !important;color:#aeb9c8 !important;font-weight:720;transition:.16s ease !important}
+.nav button:hover{background:#121b27 !important;color:#fff !important;transform:translateX(2px)}
+.nav button.active{background:linear-gradient(90deg,rgba(244,197,66,.17),rgba(244,197,66,.055)) !important;color:#ffe38a !important;box-shadow:inset 3px 0 0 #f4c542}
+main{max-width:1700px;width:100%;margin:0 auto}
+.topbar,.top{padding-bottom:5px}
+.stats{gap:13px !important}
+.stat{position:relative;overflow:hidden}
+.stat:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,rgba(244,197,66,.42),transparent)}
+.stat strong{letter-spacing:-.035em}
+.toolbar{align-items:center}
+.toolbar input,.toolbar select{min-width:190px}
+@media(max-width:900px){
+ body{padding-bottom:72px}
+ aside{position:relative !important;padding:12px 12px 0 !important;border-right:0 !important;box-shadow:none !important}
+ aside .brand{padding:0 4px 10px}
+ .nav{position:fixed;left:8px;right:8px;bottom:8px;z-index:500;display:flex !important;overflow-x:auto;background:rgba(9,13,20,.94);border:1px solid #253142;border-radius:17px;padding:6px;box-shadow:0 14px 45px rgba(0,0,0,.45);backdrop-filter:blur(16px)}
+ .nav button{flex:0 0 auto;margin:0 2px !important;padding:10px 12px !important;min-height:44px}
+ .nav button.active{box-shadow:inset 0 -3px 0 #f4c542 !important;background:rgba(244,197,66,.12) !important}
+ main{padding:14px 11px !important}.stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:9px !important}
+ .card{border-radius:16px !important}.top,.topbar{align-items:flex-start !important;flex-wrap:wrap}
+}
+@media(max-width:520px){
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.stat{padding:13px !important}.stat strong{font-size:22px !important}
+ .toolbar input,.toolbar select,.toolbar .btn{width:100% !important;min-width:0}.toolbar{gap:7px !important}
+}
+
+.current-number{background:radial-gradient(circle at 34% 28%,#fff4c2,#f5cb54 42%,#d5a91f) !important;box-shadow:0 0 0 10px rgba(244,197,66,.045),0 24px 60px rgba(244,197,66,.20) !important}
+.num.called,.pick-num:not(.used):hover{background:linear-gradient(145deg,#ffe180,#edbb30) !important;color:#17120a !important;border-color:#f4c542 !important}
+.pick-num,.num{background:#0a1018 !important;border-color:#263343 !important}
+.claim-item,.claim-alert{background:linear-gradient(145deg,#101823,#0b1119) !important;border-color:#263343 !important}
+.ticket-card{box-shadow:0 18px 42px rgba(0,0,0,.28)}
+#hostLoginScreen{background:radial-gradient(circle at 50% 0%,rgba(244,197,66,.11),transparent 30%),#05070b !important}
+#hostLoginScreen>div{background:linear-gradient(145deg,#111924,#0a0f17) !important;border:1px solid #263343 !important;box-shadow:0 25px 70px rgba(0,0,0,.48) !important}
+@media(max-width:760px){.caller-actions .btn{flex:1 1 calc(50% - 10px)}.pick-board{grid-template-columns:repeat(6,minmax(0,1fr)) !important}}
+
+
+/* Final Host app polish */
+.game-code-row{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.game-setup-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+.ticket-rate-field{margin:0;min-width:180px}.ticket-rate-field input{width:180px}
+.host-status-banner{display:flex;align-items:center;gap:9px;margin:-4px 0 16px;padding:11px 14px;border:1px solid #263343;border-radius:13px;background:linear-gradient(90deg,#0c131d,#0a1018);color:#aeb9c8;font-size:13px}
+.host-status-icon{color:#8e9aad}.host-status-banner.live{border-color:rgba(56,217,150,.35);background:linear-gradient(90deg,rgba(56,217,150,.09),#0a1018)}.host-status-banner.live .host-status-icon{color:#38d996;box-shadow:0 0 12px rgba(56,217,150,.45)}
+.host-status-banner.paused{border-color:rgba(244,197,66,.35)}.host-status-banner.paused .host-status-icon{color:#f4c542}.host-status-banner.ended .host-status-icon{color:#ff8994}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #f4c542 !important;outline-offset:2px}
+@media(max-width:760px){
+ .card,.nav{backdrop-filter:blur(8px) !important;-webkit-backdrop-filter:blur(8px) !important}
+ .card{box-shadow:0 10px 30px rgba(0,0,0,.26) !important}
+ .game-setup-row>*{width:100%}.ticket-rate-field input{width:100%}.ticket-rate-field{min-width:0;width:100%}
+ #dashboardGenerateCodeBtn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto !important;animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+
+<div id="hostLoginScreen" style="position:fixed;inset:0;z-index:99999;background:#0b0b0b;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="width:min(420px,100%);background:#151515;border:1px solid #333;border-radius:18px;padding:24px">
+    <h2 style="margin:0 0 8px;color:#ffd400">Tambola Host Login</h2>
+    <p class="muted" style="margin:0 0 18px">Login to open the Host dashboard.</p>
+
+    <label style="display:block;margin-bottom:6px">Username</label>
+    <input id="hostLoginUser" autocomplete="username" placeholder="Username" style="width:100%;margin-bottom:12px">
+
+    <label style="display:block;margin-bottom:6px">Password</label>
+    <input id="hostLoginPass" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;margin-bottom:14px">
+
+    <button class="btn btn-primary" id="hostLoginBtn" style="width:100%">Log In</button>
+    <div id="hostLoginError" style="color:#ff6b6b;margin-top:10px;min-height:20px"></div>
+  </div>
+</div>
+
+<div class="app">
+  <aside>
+    <div class="brand">
+      <div class="logo">T</div>
+      <div><h1>Tambola Host</h1><p>Live game control panel</p></div>
+    </div>
+    <div class="nav">
+      <button class="active" data-page="dashboard">🏠 Dashboard</button>
+      <button data-page="players">👥 Players</button>
+      <button data-page="claims">🏆 Claims</button>
+      <button data-page="history">🕘 Game History</button>
+      <button data-page="settings">⚙️ Settings</button>
+<button class="nav-btn" id="hostLogoutBtn">↪ Log Out</button>
+    </div>
+  </aside>
+
+  <main>
+    <section id="dashboard" class="section active">
+      <div class="topbar">
+        <div>
+          <h2 id="gameTitle">Tambola Night</h2>
+          <div class="muted">Host Control Room</div>
+          <div class="game-code-row">
+            <span class="badge">Game Code: <strong id="gameCodeDisplay">----</strong></span>
+            <span class="badge" id="firebaseStatus">Firebase: Connecting...</span>
+          </div>
+          <div class="game-setup-row">
+            <div class="field ticket-rate-field">
+              <label>Ticket Rate (₹)</label>
+              <input id="ticketRateInput" type="number" min="0" step="1" placeholder="Example: 100">
+            </div>
+            <button class="btn btn-primary" id="dashboardGenerateCodeBtn">🎲 Generate Game Code</button>
+          </div>
+        </div>
+        <div class="status"><span class="dot"></span><span id="gameState">Game Ready</span></div>
+      </div>
+
+      <div class="host-status-banner" id="hostStatusBanner"><span class="host-status-icon">●</span><span><strong>Game Control:</strong> <span id="hostStatusText">Ready for setup</span></span></div>
+
+      <div class="stats">
+        <div class="card stat"><p>Called Numbers</p><strong id="calledCount">0</strong></div>
+        <div class="card stat"><p>Remaining</p><strong id="remainingCount">90</strong></div>
+        <div class="card stat"><p>Players</p><strong id="playerCount">0</strong></div>
+        <div class="card stat"><p>Claims Won</p><strong id="claimCount">0</strong></div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <div class="card caller">
+            <h3>Current Number</h3>
+            <div class="current-number" id="currentNumber">--</div>
+            <div class="caller-actions">
+              <button class="btn btn-success" id="startBtn">▶ Start Game</button>
+              <button class="btn btn-primary" id="callBtn">🎲 Call Next Number</button>
+              <button class="btn" id="repeatBtn">🔊 Repeat</button>
+              <button class="btn" id="pauseBtn">⏸ Pause</button>
+              <button class="btn btn-danger" id="resetBtn">↻ End Game</button> <button class="btn" id="newGameBtn">＋ New Game</button>
+            </div>
+
+            <div class="form-row" style="justify-content:center;margin-top:16px">
+              <label style="display:flex;align-items:center;gap:8px">
+                <span class="muted">Auto every</span>
+                <input id="dashboardAutoSeconds" type="number" min="2" max="120" value="8" style="width:86px">
+                <span class="muted">sec</span>
+              </label>
+              <button class="btn" id="dashboardAutoBtn">▶ Start Auto</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:18px">
+            <h3>Recently Called</h3>
+            <div class="history" id="recentCalls"><span class="muted">No number called yet</span></div>
+          </div>
+
+          <div class="card manual-pick-panel" id="manualPickPanel">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+              <div>
+                <h3 style="margin-bottom:4px">All Numbers 1–90</h3>
+                <div class="muted">Tap any number to call it manually. Called numbers are disabled.</div>
+              </div>
+              <span class="badge" id="numberBoardStatus">Game not started</span>
+            </div>
+            <div class="pick-board" id="pickBoard" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card" style="margin-top:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <div>
+                <h3 style="margin-bottom:4px">Player Prize Claims</h3>
+                <div class="muted">Claims appear here immediately for host review.</div>
+              </div>
+              <button class="btn btn-primary" id="recordClaimBtn">+ Record Claim</button>
+            </div>
+            <div class="claim-alert-list" id="dashboardClaims" style="margin-top:14px"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="claim-board-layout">
+            <div>
+              <h3>Called Number Board</h3>
+              <div class="board" id="board"></div>
+            </div>
+
+            <div class="claim-ticket-inline">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                <div>
+                  <h3 style="margin:0">Player Claim Ticket</h3>
+                  <div class="muted" id="inlineClaimMeta">Appears automatically when a player claims.</div>
+                </div>
+                <span class="badge" id="inlineClaimStatus">Waiting</span>
+              </div>
+
+              <div id="inlineClaimTicketWrap">
+                <div class="claim-ticket-empty">No player claim yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="players" class="section">
+      <div class="topbar"><div><h2>Players & Tickets</h2><div class="muted">Manage participants for this game</div></div></div>
+      <div class="card">
+        <div class="form-row" style="margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="addPlayer">🎟 Generate Now</button>
+          <span class="muted" style="flex:1">A unique ticket number and Tambola ticket will be created automatically.</span>
+          <select id="ticketStatusFilter" style="min-width:170px">
+            <option value="all">All Tickets</option>
+            <option value="booked">Booked Tickets</option>
+            <option value="unbooked">Unbooked Tickets</option>
+          </select>
+          <button class="btn" id="printUnbookedBtn">🖨 Print All Unbooked</button>
+        </div>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>#</th><th>Player</th><th>Ticket</th><th>Booking</th><th>Action</th></tr></thead>
+            <tbody id="playerTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="claims" class="section">
+      <div class="topbar"><div><h2>Claims</h2><div class="muted">Create prizes, set prize amounts and manage claims</div></div></div>
+      <div class="card" style="margin-bottom:18px">
+        <h3>Create & Edit Prizes</h3>
+        <div class="form-row" style="margin-bottom:14px">
+          <input id="newClaimName" placeholder="Prize name (e.g. Early Five)">
+          <input id="newClaimAmount" type="number" min="0" step="1" placeholder="Prize amount ₹ (e.g. 500)">
+          <button class="btn btn-primary" id="addClaimType">+ Add Prize</button>
+        </div>
+        <div id="claimTypeEditor"></div>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <h3>Record Player Claim</h3>
+        <div class="form-row">
+          <select id="claimPlayerSelect"><option value="">Select player</option></select>
+          <select id="claimPrizeSelect"><option value="">Select prize</option></select>
+          <button class="btn btn-primary" id="submitPlayerClaim">Submit Claim</button>
+        </div>
+      </div>
+      <div class="claim-grid" id="claimGrid"></div>
+    </section>
+
+    <section id="history" class="section">
+      <div class="topbar"><div><h2>Game History</h2><div class="muted">Saved completed/reset games</div></div></div>
+      <div class="card">
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Date</th><th>Game</th><th>Numbers Called</th><th>Players</th><th>Claims</th></tr></thead>
+            <tbody id="gameHistory"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings" class="section">
+      <div class="topbar"><div><h2>Settings</h2><div class="muted">Customize the host game</div></div></div>
+      <div class="card">
+        <div class="settings-grid">
+          <div class="field"><label>Game title</label><input id="settingTitle" value="Tambola Night"></div>
+          <div class="field"><label>Host name</label><input id="hostName" placeholder="Host name"></div>
+          <div class="field"><label>Auto-call interval (seconds)</label><input id="autoSeconds" type="number" min="2" max="120" value="8"></div>
+          <div class="field"><label>Game Code</label><input id="gameCodeInput" maxlength="20" placeholder="Example: TMB-1234"></div>
+        </div>
+        <div class="form-row" style="margin-top:16px">
+          <button class="btn btn-primary" id="saveSettings">Save Settings</button>
+          <button class="btn" id="generateGameCode">Generate Game Code</button>
+          <button class="btn" id="autoBtn">▶ Start Auto Call</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
+<script>
+window.TAMBOLA_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB5T_Bfxg_F76wc9HiS-RjbPoNOqHrs4-M",
+  authDomain: "tambola-5456a.firebaseapp.com",
+  databaseURL: "https://tambola-5456a-default-rtdb.firebaseio.com",
+  projectId: "tambola-5456a",
+  storageBucket: "tambola-5456a.firebasestorage.app",
+  messagingSenderId: "962080288999",
+  appId: "1:962080288999:web:f6f5ef10387a9cb5cf3242",
+  measurementId: "G-1ETV6NRZ2Y"
+};
+</script>
+<script>
+const initialClaims = [
+  'Early Five','Top Line','Middle Line','Bottom Line',
+  'Four Corners','Full House 1','Full House 2','Full House 3'
+];
+
+let state = JSON.parse(localStorage.getItem('tambolaHostState')) || {
+  called:[], players:[], claims:{}, histories:[], paused:false,
+  title:'Tambola Night', host:'', autoSeconds:8
+};
+
+state.playerClaims = Array.isArray(state.playerClaims) ? state.playerClaims : [];
+state.prizeTypes = Array.isArray(state.prizeTypes) && state.prizeTypes.length ? state.prizeTypes : [...initialClaims];
+state.prizeAmounts = state.prizeAmounts && typeof state.prizeAmounts==='object' ? state.prizeAmounts : {};
+state.started = Boolean(state.started);
+state.gameCode = state.gameCode || ('TMB-' + Math.random().toString(36).slice(2,6).toUpperCase());
+
+let autoTimer=null;
+const $=s=>document.querySelector(s);
+
+// ---------- Firebase Realtime Database ----------
+let firebaseDb=null;
+let firebaseStateRef=null;
+let firebaseClaimsRef=null;
+let firebaseBoundCode='';
+let hostAccountStatusRef=null;
+let hostAccountStatusKey='';
+let firebaseApplyingRemote=false;
+let lastFirebaseClaimsJSON=JSON.stringify(state.playerClaims||[]);
+
+function firebaseConfigReady(){
+  const c=window.TAMBOLA_FIREBASE_CONFIG;
+  return !!(c && c.apiKey && c.databaseURL && !String(c.apiKey).includes('PASTE_'));
+}
+function stateForFirebase(){
+  const copy=JSON.parse(JSON.stringify(state));
+  delete copy.playerClaims;
+
+  // Normalize ticket booking state before publishing to Player.
+  copy.players=(Array.isArray(copy.players)?copy.players:[]).map(player=>({
+    ...player,
+    status:String(player?.status||'unbooked').toLowerCase()==='booked'?'booked':'unbooked'
+  }));
+
+  // Always publish the logged-in Host identity with the live room.
+  const hostSession=getHostSession()||{};
+  copy.hostId=String(hostSession.id||copy.hostId||'');
+  copy.hostUsername=String(hostSession.username||copy.hostUsername||'');
+  copy.hostName=String(hostSession.name||copy.hostName||copy.host||'Host');
+  if(!copy.host) copy.host=copy.hostName;
+
+  return copy;
+}
+function claimsToObject(arr){
+  const out={};
+  (arr||[]).forEach(c=>{ if(c && c.id!=null) out[String(c.id)]=c; });
+  return out;
+}
+function claimsFromFirebase(v){
+  if(!v)return [];
+  if(Array.isArray(v))return v.filter(Boolean);
+  return Object.values(v).filter(Boolean).sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0));
+}
+function normalizeStateAfterRemote(remote){
+  const incomingClaims=state.playerClaims||[];
+  state={...state,...(remote||{})};
+  state.playerClaims=incomingClaims;
+  state.called=Array.isArray(state.called)?state.called:[];
+  state.players=Array.isArray(state.players)?state.players:[];
+  state.claims=state.claims&&typeof state.claims==='object'?state.claims:{};
+  state.histories=Array.isArray(state.histories)?state.histories:[];
+  state.prizeTypes=Array.isArray(state.prizeTypes)&&state.prizeTypes.length?state.prizeTypes:[...initialClaims];
+  state.prizeAmounts=state.prizeAmounts&&typeof state.prizeAmounts==='object'?state.prizeAmounts:{};
+  state.started=Boolean(state.started);
+  state.paused=Boolean(state.paused);
+  state.hostId=String(state.hostId||'');
+  state.hostUsername=String(state.hostUsername||'');
+  state.hostName=String(state.hostName||state.host||'');
+}
+function renderEverything(){
+  updateDashboard();
+  renderPlayers();
+  renderClaims();
+  renderHistory();
+  renderClaimPlayerOptions();
+  renderPrizeOptions();
+  renderClaimTypeEditor();
+  renderDashboardClaims();
+  if($('#settingTitle'))$('#settingTitle').value=state.title||'Tambola Night';
+  if($('#hostName'))$('#hostName').value=state.host||'';
+  if($('#autoSeconds'))$('#autoSeconds').value=state.autoSeconds||8;
+  if($('#dashboardAutoSeconds'))$('#dashboardAutoSeconds').value=state.autoSeconds||8;
+  if($('#gameCodeInput'))$('#gameCodeInput').value=state.gameCode||'';
+}
+function setFirebaseStatus(text, ok){
+  const el=document.getElementById('firebaseStatus');
+  if(!el)return;
+  el.textContent=text;
+  el.style.color=ok===true?'#73f2aa':(ok===false?'#ff8a8a':'');
+}
+
+function bindFirebaseGame(code){
+  if(!firebaseDb || !code)return;
+  code=String(code).trim().toUpperCase();
+
+  if(firebaseBoundCode===code && firebaseStateRef && firebaseClaimsRef)return;
+
+  if(firebaseStateRef)firebaseStateRef.off();
+  if(firebaseClaimsRef)firebaseClaimsRef.off();
+
+  firebaseBoundCode=code;
+  const roomRef=firebaseDb.ref(`tambolaRooms/${code}`);
+  firebaseStateRef=roomRef.child('game');
+  firebaseClaimsRef=roomRef.child('claims');
+
+  firebaseStateRef.on('value',snap=>{
+    if(!snap.exists())return;
+    firebaseApplyingRemote=true;
+    normalizeStateAfterRemote(snap.val());
+    localStorage.setItem('tambolaHostState',JSON.stringify(state));
+    renderEverything();
+    firebaseApplyingRemote=false;
+  }, err=>{
+    console.error('Firebase game read failed:',err);
+    setFirebaseStatus('Firebase: Read blocked',false);
+  });
+
+  firebaseClaimsRef.on('value',snap=>{
+    const incoming=claimsFromFirebase(snap.val());
+    incoming.forEach(c=>{
+      const key=String(c.id);
+      if(!lastSeenClaimIds.has(key)){
+        showHostToast(`Ticket ${c.ticket} claimed ${c.prize} — ${c.validationLabel||'Needs review'}`);
+        lastSeenClaimIds.add(key);
+      }
+    });
+    state.playerClaims=incoming;
+    lastFirebaseClaimsJSON=JSON.stringify(state.playerClaims);
+    localStorage.setItem('tambolaHostState',JSON.stringify(state));
+    renderDashboardClaims();
+    renderClaims();
+    updateDashboard();
+  }, err=>{
+    console.error('Firebase claims read failed:',err);
+  });
+
+  // Explicitly create/update the game room immediately.
+  firebaseStateRef.set(stateForFirebase())
+    .then(()=>setFirebaseStatus('Firebase: Synced',true))
+    .catch(err=>{
+      console.error('Firebase initial write failed:',err);
+      setFirebaseStatus('Firebase: WRITE FAILED',false);
+      alert('Firebase write failed: '+err.message);
+    });
+}
+
+function syncFirebase(){
+  if(!firebaseDb || firebaseApplyingRemote || !state.gameCode)return;
+
+  bindFirebaseGame(state.gameCode);
+
+  firebaseStateRef.set(stateForFirebase())
+    .then(()=>setFirebaseStatus('Firebase: Synced',true))
+    .catch(err=>{
+      console.error('Firebase state write failed:',err);
+      setFirebaseStatus('Firebase: WRITE FAILED',false);
+    });
+
+  const nowClaims=JSON.stringify(state.playerClaims||[]);
+  if(nowClaims!==lastFirebaseClaimsJSON){
+    lastFirebaseClaimsJSON=nowClaims;
+    const payload=claimsToObject(state.playerClaims||[]);
+    firebaseClaimsRef.set(Object.keys(payload).length?payload:null)
+      .catch(err=>{
+        console.error('Firebase claims write failed:',err);
+        setFirebaseStatus('Firebase: CLAIM WRITE FAILED',false);
+      });
+  }
+}
+
+function initFirebase(){
+  if(!firebaseConfigReady()){
+    setFirebaseStatus('Firebase: Config missing',false);
+    return;
+  }
+
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(window.TAMBOLA_FIREBASE_CONFIG);
+    firebaseDb=firebase.database();
+  setTimeout(watchHostAccountStatus,0);
+
+    firebaseDb.ref('.info/connected').on('value',snap=>{
+      if(snap.val()===true){
+        setFirebaseStatus('Firebase: Connected',true);
+        bindFirebaseGame(state.gameCode);
+      }else{
+        setFirebaseStatus('Firebase: Offline',false);
+      }
+    });
+
+    // Try immediately too; .info/connected will confirm actual connection.
+    bindFirebaseGame(state.gameCode);
+  }catch(err){
+    console.error('Firebase initialization failed:',err);
+    setFirebaseStatus('Firebase: INIT FAILED',false);
+    alert('Firebase initialization failed: '+err.message);
+  }
+}
+
+
+function syncGameCommercialDetails(){
+  const rateEl=document.getElementById('ticketRateInput');
+  if(rateEl) state.ticketRate=rateEl.value.trim();
+}
+function loadGameCommercialDetails(){
+  const rateEl=document.getElementById('ticketRateInput');
+  if(rateEl) rateEl.value=state.ticketRate||'';
+}
+
+function save(){
+  localStorage.setItem('tambolaHostState',JSON.stringify(state));
+  syncFirebase();
+}
+
+function adminAuditEvent(type, details={}){
+  if(!firebaseDb || !state.gameCode) return;
+  const hostSession=getHostSession()||{};
+  const ref=firebaseDb.ref('tambolaAdminEvents').push();
+  ref.set({
+    id:ref.key,
+    type,
+    source:'host',
+    hostId:String(hostSession.id||''),
+    hostUsername:String(hostSession.username||''),
+    hostName:String(hostSession.name||state.host||'Host'),
+    gameCode:String(state.gameCode||''),
+    title:String(state.title||'Tambola Night'),
+    ticketRate:String(state.ticketRate||''),
+    prizeDetails:String(state.prizeDetails||''),
+    at:Date.now(),
+    time:new Date().toLocaleString(),
+    details
+  }).catch(err=>console.warn('Admin audit write failed:',err));
+}
+
+function saveCompletedGameToAdmin(){
+  if(!firebaseDb || !state.gameCode) return;
+
+  const players=Array.isArray(state.players)?state.players:[];
+  const approved=Array.isArray(state.playerClaims)
+    ? state.playerClaims.filter(c=>String(c?.status||'').toLowerCase()==='approved')
+    : [];
+
+  const ticketRate=Number(state.ticketRate)||0;
+  const bookedTickets=players.filter(p=>String(p?.status||'unbooked').toLowerCase()==='booked').length;
+  const totalTicketSales=ticketRate*bookedTickets;
+
+  // Build the payout from approved player claims first.
+  const paidPrizeNames=new Set();
+  let totalPrizePayout=approved.reduce((sum,c)=>{
+    const prize=String(c?.prize||'');
+    if(prize)paidPrizeNames.add(prize.trim().toLowerCase());
+    const direct=Number(c?.amount ?? c?.prizeAmount);
+    if(Number.isFinite(direct) && direct>0)return sum+direct;
+    return sum+(Number(state.prizeAmounts?.[prize])||0);
+  },0);
+
+  // Also count prizes manually declared by Host in the Claims panel.
+  // Avoid counting the same prize twice if it already exists as an approved player claim.
+  Object.entries(state.claims||{}).forEach(([prize,winner])=>{
+    if(!winner)return;
+    const key=String(prize||'').trim().toLowerCase();
+    if(!key || paidPrizeNames.has(key))return;
+    totalPrizePayout += Number(state.prizeAmounts?.[prize])||0;
+    paidPrizeNames.add(key);
+  });
+
+  const net=totalTicketSales-totalPrizePayout;
+  const profit=Math.max(net,0);
+  const loss=Math.max(-net,0);
+
+  const hostSession=getHostSession()||{};
+  const historyId=`${state.gameCode}_${Date.now()}`;
+  const snapshot={
+    id:historyId,
+    gameCode:String(state.gameCode||''),
+    title:String(state.title||'Tambola Night'),
+    host:String(state.host||hostSession.name||hostSession.username||'Host'),
+    hostId:String(hostSession.id||''),
+    hostUsername:String(hostSession.username||''),
+    hostName:String(hostSession.name||state.host||'Host'),
+    endedAt:Date.now(),
+    endedTime:new Date().toLocaleString(),
+    called:Array.isArray(state.called)?[...state.called]:[],
+    players:JSON.parse(JSON.stringify(players)),
+    claims:state.claims&&typeof state.claims==='object'?JSON.parse(JSON.stringify(state.claims)):{},
+    playerClaims:Array.isArray(state.playerClaims)?JSON.parse(JSON.stringify(state.playerClaims)):[],
+    prizeTypes:Array.isArray(state.prizeTypes)?[...state.prizeTypes]:[],
+    prizeAmounts:state.prizeAmounts&&typeof state.prizeAmounts==='object'?JSON.parse(JSON.stringify(state.prizeAmounts)):{},
+
+    // Financial snapshot used by Admin History / Profit & Loss.
+    ticketRate,
+    bookedTickets,
+    totalTicketSales,
+    totalPrizePayout,
+    netProfitLoss:net,
+    profit,
+    loss,
+
+    totalCalled:Array.isArray(state.called)?state.called.length:0,
+    totalPlayers:players.length,
+    approvedClaims:approved.length
+  };
+
+  firebaseDb.ref(`tambolaAdminHistory/${historyId}`).set(snapshot)
+    .catch(err=>console.warn('Admin history write failed:',err));
+}
+function renderBoard(){
+  const board=$('#board'); board.innerHTML='';
+  for(let i=1;i<=90;i++){
+    const d=document.createElement('div');
+    d.className='num'+(state.called.includes(i)?' called':'');
+    d.textContent=i; board.appendChild(d);
+  }
+}
+
+function renderPickBoard(){
+  const board=$('#pickBoard');
+  if(!board)return;
+  board.innerHTML='';
+  for(let i=1;i<=90;i++){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='pick-num'+(state.called.includes(i)?' used':'');
+    b.textContent=i;
+    b.disabled=state.called.includes(i) || !state.started || state.paused;
+    b.title=state.called.includes(i)?`Number ${i} already called`:(!state.started?'Start the game first':(state.paused?'Game is paused':`Call number ${i}`));
+    b.addEventListener('click',()=>manualCallNumber(i));
+    board.appendChild(b);
+  }
+}
+function manualCallNumber(n){
+  if(!state.started)return alert('Press Start Game first.');
+  if(state.paused)return alert('Game is paused.');
+  if(state.called.includes(n))return alert(`Number ${n} has already been called.`);
+  state.called.push(n);
+  save();updateDashboard();speak(n);
+}
+function renderClaimPlayerOptions(){
+  const sel=$('#claimPlayerSelect');
+  if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">Select player</option>';
+  state.players.forEach((p,i)=>{
+    const op=document.createElement('option');
+    op.value=String(i);
+    op.textContent=`Ticket ${p.ticket}`;
+    sel.appendChild(op);
+  });
+  if([...sel.options].some(o=>o.value===current))sel.value=current;
+}
+function addPlayerClaim(playerIndex, prize){
+  const p=state.players[playerIndex];
+  if(!p)return alert('Please select a valid player.');
+  if(!prize)return alert('Please select a prize.');
+  const duplicate=state.playerClaims.find(c=>c.status!=='rejected' && c.ticket===p.ticket && c.prize===prize);
+  if(duplicate)return alert('This player already has an active claim for this prize.');
+  state.playerClaims.unshift({
+    id:Date.now()+Math.floor(Math.random()*1000),
+    player:'',
+    ticket:p.ticket,
+    prize,
+    status:'pending',
+    time:new Date().toLocaleString()
+  });
+  save();renderDashboardClaims();updateDashboard();
+}
+
+function showHostToast(message){
+  let t=document.getElementById('hostToast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hostToast';
+    t.style.cssText='position:fixed;right:18px;top:18px;z-index:9999;background:#f7c948;color:#111;padding:14px 18px;border-radius:12px;font-weight:900;box-shadow:0 10px 30px rgba(0,0,0,.35);display:none;max-width:360px';
+    document.body.appendChild(t);
+  }
+  t.textContent=message;
+  t.style.display='block';
+  clearTimeout(window.__hostToastTimer);
+  window.__hostToastTimer=setTimeout(()=>t.style.display='none',3500);
+}
+let lastSeenClaimIds=new Set((state.playerClaims||[]).map(c=>String(c.id)));
+
+function renderInlineClaimTicket(){
+  const wrap=$('#inlineClaimTicketWrap');
+  const meta=$('#inlineClaimMeta');
+  const statusEl=$('#inlineClaimStatus');
+  if(!wrap)return;
+
+  const claims=[...(state.playerClaims||[])]
+    .filter(c=>String(c?.status||'pending').toLowerCase()==='pending')
+    .sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0));
+  const claim=claims[0];
+
+  if(!claim){
+    wrap.innerHTML='<div class="claim-ticket-empty">No pending claim.</div>';
+    if(meta)meta.textContent='Only pending player claims appear here.';
+    if(statusEl){statusEl.textContent='Waiting';statusEl.className='badge';}
+    return;
+  }
+
+  const registered=(state.players||[]).find(p=>
+    String(p.ticket).trim().toLowerCase()===String(claim.ticket).trim().toLowerCase()
+  );
+  const ticket=(Array.isArray(claim.ticketData) && claim.ticketData.length===3)
+    ? claim.ticketData
+    : generateTicket(String(claim.ticket));
+
+  const marked=new Set((claim.markedNumbers||[]).map(Number));
+  const status=String(claim.status||'pending').toLowerCase();
+
+  if(meta)meta.textContent=`Ticket ${claim.ticket} • ${claim.prize} • ${claim.validationLabel||'Needs host review'}`;
+  if(statusEl){
+    statusEl.textContent=status.toUpperCase();
+    statusEl.className='claim-status '+(status==='approved'?'approved':status==='rejected'?'rejected':'pending');
+  }
+
+  const rows=ticket.map(row=>`<tr>${row.map(v=>{
+    if(v===null)return '<td class="blank">&nbsp;</td>';
+    let style='';
+    let title='';
+    if(marked.has(Number(v))){
+      style='background:#f7c948;color:#111;box-shadow:inset 0 0 0 2px #fff;';
+      title='Marked by player';
+    }else if((state.called||[]).includes(Number(v))){
+      style='outline:2px solid #58c4ff;outline-offset:-2px;';
+      title='Called by host';
+    }
+    return `<td style="${style}" title="${esc(title)}">${esc(v)}</td>`;
+  }).join('')}</tr>`).join('');
+
+  wrap.innerHTML=`
+    <div class="ticket-card">
+      <div class="ticket-title">Ticket ${esc(claim.ticket)}</div>
+      <table class="tambola-ticket"><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+function renderDashboardClaims(){
+  const box=$('#dashboardClaims');
+  if(!box)return;
+  box.innerHTML='';
+  if(!state.playerClaims.length){
+    box.innerHTML='<div class="muted">No player prize claims yet.</div>';
+    return;
+  }
+  state.playerClaims.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='claim-alert';
+    const statusClass=c.status==='approved'?'approved':c.status==='rejected'?'rejected':'pending';
+    d.innerHTML=`
+      <div>
+        <div><strong>Ticket ${esc(c.ticket)}</strong> claimed <span class="prize">${esc(c.prize)}</span>
+          <span class="claim-status ${statusClass}">${esc(c.status.toUpperCase())}</span>
+        </div>
+        <div class="meta">Ticket ${esc(c.ticket)} • ${esc(c.time)} • ${esc(c.validationLabel||'Needs host review')}</div>
+      </div>
+      <div class="claim-actions">
+        <button class="btn" data-ticket="${c.id}">🎟 Show Ticket</button>
+        ${c.status==='pending'?`<button class="btn btn-success" data-approve="${c.id}">✓ Approve</button>
+        <button class="btn btn-danger" data-reject="${c.id}">✕ Reject</button>`:''}
+        <button class="btn" data-remove="${c.id}">Delete</button>
+      </div>`;
+    box.appendChild(d);
+  });
+  box.querySelectorAll('[data-ticket]').forEach(b=>b.addEventListener('click',()=>showTicketByClaimId(Number(b.dataset.ticket))));
+  box.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>reviewPlayerClaim(Number(b.dataset.approve),'approved')));
+  box.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>reviewPlayerClaim(Number(b.dataset.reject),'rejected')));
+  box.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>removePlayerClaim(Number(b.dataset.remove))));
+}
+function reviewPlayerClaim(id,status){
+  const c=state.playerClaims.find(x=>x.id===id);
+  if(!c)return;
+  c.status=status;
+  if(status==='approved')state.claims[c.prize]=`Ticket ${c.ticket}`;
+  save();renderDashboardClaims();renderClaims();updateDashboard();
+}
+function removePlayerClaim(id){
+  state.playerClaims=state.playerClaims.filter(x=>x.id!==id);
+  save();renderDashboardClaims();updateDashboard();
+}
+
+function updateDashboard(){
+  $('#calledCount').textContent=state.called.length;
+  $('#remainingCount').textContent=90-state.called.length;
+  $('#playerCount').textContent=state.players.length;
+  $('#claimCount').textContent=Object.values(state.claims).filter(Boolean).length;
+  $('#currentNumber').textContent=state.called.length?state.called[state.called.length-1]:'--';
+  $('#gameTitle').textContent=state.title || 'Tambola Night';
+  $('#gameCodeDisplay').textContent=state.gameCode || '----';
+  $('#gameState').textContent=!state.started?'Game Ready':(state.paused?'Paused':'Game Live');
+  $('#pauseBtn').textContent=state.paused?'▶ Resume':'⏸ Pause';
+  $('#pauseBtn').disabled=!state.started;
+  $('#callBtn').disabled=!state.started || state.paused;
+  $('#startBtn').disabled=state.started;
+  $('#startBtn').textContent=state.started?'✓ Game Started':'▶ Start Game';
+  if($('#dashboardAutoBtn')) $('#dashboardAutoBtn').disabled=!state.started;
+  const boardStatus=$('#numberBoardStatus');
+  if(boardStatus) boardStatus.textContent=!state.started?'Game not started':(state.paused?'Paused':'Live');
+
+  const r=$('#recentCalls'); r.innerHTML='';
+  const recent=[...state.called].slice(-12).reverse();
+  if(!recent.length) r.innerHTML='<span class="muted">No number called yet</span>';
+  else recent.forEach(n=>{const s=document.createElement('span');s.textContent=n;r.appendChild(s)});
+  renderBoard();
+  renderPickBoard();
+  renderDashboardClaims();
+  renderInlineClaimTicket();
+  renderClaimPlayerOptions();
+}
+function speak(n){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(n===undefined?'':`Number ${n}`);
+  u.rate=.85; u.pitch=1; speechSynthesis.speak(u);
+}
+function callNext(){
+  if(!state.started) return alert('Press Start Game first.');
+  if(state.paused) return alert('Game is paused.');
+  if(state.called.length>=90) return alert('All 90 numbers have been called.');
+  const remaining=[];
+  for(let i=1;i<=90;i++) if(!state.called.includes(i)) remaining.push(i);
+  const n=remaining[Math.floor(Math.random()*remaining.length)];
+  state.called.push(n); save(); updateDashboard(); speak(n);
+}
+function generateUniqueTicketNumber(){
+  // 6-digit ticket number, checked against all current players.
+  let ticket;
+  do{
+    ticket=String(Math.floor(100000+Math.random()*900000));
+  }while((state.players||[]).some(p=>String(p.ticket)===ticket));
+  return ticket;
+}
+
+
+function printAllUnbookedTickets(){
+  const unbooked=(state.players||[]).filter(p=>(p.status||'unbooked')==='unbooked');
+  if(!unbooked.length)return alert('There are no unbooked tickets to print.');
+
+  const ticketHtml=unbooked.map((p,index)=>{
+    const ticket=generateTicket(String(p.ticket));
+    const rows=ticket.map(row=>`<tr>${row.map(v=>`<td class="${v===null?'blank':''}">${v===null?'':v}</td>`).join('')}</tr>`).join('');
+    return `
+      <section class="print-ticket">
+        <div class="ticket-head">
+          <strong>Tambola Ticket</strong>
+          <span>Ticket No: ${esc(p.ticket)}</span>
+        </div>
+        <table><tbody>${rows}</tbody></table>
+      </section>`;
+  }).join('');
+
+  const w=window.open('','_blank');
+  if(!w)return alert('Print window was blocked. Please allow pop-ups for this page.');
+
+  w.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Unbooked Tambola Tickets</title>
+<style>
+  @page{size:A4 portrait;margin:8mm}
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;margin:0;color:#000;background:#fff}
+  .print-ticket{
+    break-inside:avoid;
+    page-break-inside:avoid;
+    margin:0 0 8mm;
+    border:2px solid #000;
+    padding:4mm;
+  }
+  .ticket-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:15px;
+    margin-bottom:3mm;
+  }
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  td{
+    border:1.5px solid #000;
+    height:15mm;
+    text-align:center;
+    vertical-align:middle;
+    font-size:20px;
+    font-weight:700;
+  }
+  td.blank{background:#eee}
+  @media print{
+    .print-ticket{margin-bottom:7mm}
+  }
+</style>
+</head>
+<body>
+${ticketHtml}
+<script>
+window.onload=()=>{window.print();}
+<\/script>
+</body>
+</html>`);
+  w.document.close();
+}
+
+function renderPlayers(){
+  const t=$('#playerTable');
+  t.innerHTML='';
+
+  const filter=$('#ticketStatusFilter')?.value || 'all';
+  const players=(state.players||[]).map((p,i)=>({p,i})).filter(({p})=>{
+    const status=(p.status||'unbooked').toLowerCase();
+    return filter==='all' || status===filter;
+  });
+
+  if(!players.length){
+    t.innerHTML='<tr><td colspan="4" class="muted">No tickets found.</td></tr>';
+    return;
+  }
+
+  players.forEach(({p,i})=>{
+    if(!p.status)p.status='unbooked';
+    const tr=document.createElement('tr');
+    const booked=p.status==='booked';
+
+    tr.innerHTML=`
+      <td>${i+1}</td>
+      <td>${esc(p.ticket)}</td>
+      <td>
+        <button class="btn ${booked?'btn-success':''}" data-toggle-booked="${i}" 
+          title="Click to change Booked / Unbooked">
+          ${booked?'✓ Booked':'Unbooked'}
+        </button>
+      </td>
+      <td>
+        <button class="btn" onclick="showTicket(${i})">Show Ticket</button>
+        <button class="btn btn-danger" onclick="removePlayer(${i})">Delete</button>
+      </td>`;
+    t.appendChild(tr);
+  });
+
+  t.querySelectorAll('[data-toggle-booked]').forEach(btn=>{
+    btn.onclick=()=>{
+      const i=Number(btn.dataset.toggleBooked);
+      const p=state.players[i];
+      if(!p)return;
+      p.status=(p.status==='booked')?'unbooked':'booked';
+      save();
+      renderPlayers();
+      updateDashboard();
+    };
+  });
+}
+function esc(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function seededRandom(seed){
+  let x = 0;
+  for(let i=0;i<seed.length;i++) x = ((x<<5)-x + seed.charCodeAt(i))|0;
+  return function(){
+    x |= 0; x = x + 0x6D2B79F5 | 0;
+    let t = Math.imul(x ^ x >>> 15, 1 | x);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+function generateTicket(seedText){
+  const rnd = seededRandom(seedText);
+  const cols = [
+    [1,9],[10,19],[20,29],[30,39],[40,49],[50,59],[60,69],[70,79],[80,90]
+  ];
+  const ticket = Array.from({length:3},()=>Array(9).fill(null));
+
+  // choose 5 occupied columns per row
+  const rowCols = [];
+  for(let r=0;r<3;r++){
+    const arr=[0,1,2,3,4,5,6,7,8].sort(()=>rnd()-.5).slice(0,5).sort((a,b)=>a-b);
+    rowCols.push(arr);
+  }
+
+  // Ensure every column has at least one number
+  for(let c=0;c<9;c++){
+    if(!rowCols.some(rc=>rc.includes(c))){
+      const r=Math.floor(rnd()*3);
+      const replaceIndex=Math.floor(rnd()*rowCols[r].length);
+      rowCols[r][replaceIndex]=c;
+      rowCols[r]=[...new Set(rowCols[r])].sort((a,b)=>a-b);
+      while(rowCols[r].length<5){
+        const extra=Math.floor(rnd()*9);
+        if(!rowCols[r].includes(extra)) rowCols[r].push(extra);
+      }
+      rowCols[r].sort((a,b)=>a-b);
+    }
+  }
+
+  for(let c=0;c<9;c++){
+    const rows=[0,1,2].filter(r=>rowCols[r].includes(c));
+    const [min,max]=cols[c];
+    const nums=[];
+    while(nums.length<rows.length){
+      const n=min+Math.floor(rnd()*(max-min+1));
+      if(!nums.includes(n)) nums.push(n);
+    }
+    nums.sort((a,b)=>a-b);
+    rows.sort((a,b)=>a-b);
+    rows.forEach((r,idx)=>ticket[r][c]=nums[idx]);
+  }
+  return ticket;
+}
+window.showTicket=i=>{
+  const p=state.players[i];
+  if(!p)return;
+  const ticket=generateTicket(String(p.ticket));
+  $('#ticketOwner').textContent=`Ticket ${p.ticket}`;
+  $('#ticketMeta').textContent=`Ticket No: ${p.ticket}`;
+  const body=$('#ticketBody'); body.innerHTML='';
+  ticket.forEach(row=>{
+    const tr=document.createElement('tr');
+    row.forEach(v=>{
+      const td=document.createElement('td');
+      if(v===null){td.className='blank';td.innerHTML='&nbsp;'}
+      else td.textContent=v;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  $('#ticketModal').classList.add('show');
+};
+
+window.showTicketByClaimId=id=>{
+  const claim=state.playerClaims.find(c=>c.id===id);
+  if(!claim)return;
+
+  const registered=(state.players||[]).find(p=>
+    String(p.ticket).trim().toLowerCase()===String(claim.ticket).trim().toLowerCase()
+  );
+  const p=registered || {name:'',ticket:claim.ticket};
+
+  const ticket=(Array.isArray(claim.ticketData) && claim.ticketData.length===3)
+    ? claim.ticketData
+    : generateTicket(String(p.ticket));
+
+  const manualMarked=new Set((claim.markedNumbers||[]).map(Number));
+
+  $('#ticketOwner').textContent=`Ticket ${p.ticket}`;
+  $('#ticketMeta').textContent=`Claim: ${claim.prize} • ${claim.validationLabel||'Needs host review'}`;
+  const body=$('#ticketBody'); body.innerHTML='';
+
+  ticket.forEach(row=>{
+    const tr=document.createElement('tr');
+    row.forEach(v=>{
+      const td=document.createElement('td');
+      if(v===null){
+        td.className='blank';
+        td.innerHTML='&nbsp;';
+      }else{
+        td.textContent=v;
+        if(manualMarked.has(v)){
+          td.style.background='#f7c948';
+          td.style.color='#111';
+          td.style.boxShadow='inset 0 0 0 3px #fff';
+        }
+        if((state.called||[]).includes(v) && !manualMarked.has(v)){
+          td.style.outline='2px solid #58c4ff';
+          td.title='Called by host but not manually marked by player';
+        }
+      }
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+  $('#ticketModal').classList.add('show');
+};
+
+window.removePlayer=i=>{state.players.splice(i,1);save();renderPlayers();renderClaimPlayerOptions();updateDashboard();}
+
+function renderPrizeOptions(){
+  const sel=$('#claimPrizeSelect');
+  if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">Select prize</option>';
+  state.prizeTypes.forEach(name=>{
+    const op=document.createElement('option');
+    const amount=Number(state.prizeAmounts?.[name]||0);
+    op.value=name;
+    op.textContent=amount>0 ? `${name} — ₹${amount.toLocaleString('en-IN')}` : name;
+    sel.appendChild(op);
+  });
+  if(state.prizeTypes.includes(current))sel.value=current;
+}
+function renderClaimTypeEditor(){
+  const box=$('#claimTypeEditor');
+  if(!box)return;
+  box.innerHTML='';
+  if(!state.prizeTypes.length){
+    box.innerHTML='<div class="muted">No prizes yet. Create one above.</div>';
+    return;
+  }
+
+  const head=document.createElement('div');
+  head.className='claim-editor';
+  head.style.fontWeight='800';
+  head.style.color='var(--muted)';
+  head.innerHTML='<div>Prize Name</div><div>Prize Amount (₹)</div><div style="grid-column:span 2">Action</div>';
+  box.appendChild(head);
+
+  state.prizeTypes.forEach((name,i)=>{
+    const row=document.createElement('div');
+    row.className='claim-editor';
+    row.innerHTML=`<input value="${esc(name)}" data-claim-name="${i}">
+      <input type="number" min="0" step="1" value="${Number(state.prizeAmounts?.[name]||0)}" data-claim-amount="${i}" placeholder="Amount ₹">
+      <button class="btn btn-primary" data-save-claim="${i}">Save</button>
+      <button class="btn btn-danger" data-delete-claim="${i}">Delete</button>`;
+    box.appendChild(row);
+  });
+
+  box.querySelectorAll('[data-save-claim]').forEach(b=>b.addEventListener('click',()=>{
+    const i=Number(b.dataset.saveClaim);
+    const nameInput=box.querySelector(`[data-claim-name="${i}"]`);
+    const amountInput=box.querySelector(`[data-claim-amount="${i}"]`);
+    renameClaimType(i,nameInput.value.trim(),amountInput.value);
+  }));
+  box.querySelectorAll('[data-delete-claim]').forEach(b=>b.addEventListener('click',()=>{
+    deleteClaimType(Number(b.dataset.deleteClaim));
+  }));
+}
+function renameClaimType(i,newName,newAmount){
+  const oldName=state.prizeTypes[i];
+  if(!oldName)return;
+  if(!newName)return alert('Prize name cannot be blank.');
+  if(state.prizeTypes.some((x,idx)=>idx!==i && x.toLowerCase()===newName.toLowerCase()))
+    return alert('A prize with this name already exists.');
+
+  const amount=Math.max(0,Number(newAmount)||0);
+  state.prizeTypes[i]=newName;
+
+  if(oldName!==newName){
+    if(Object.prototype.hasOwnProperty.call(state.claims,oldName)){
+      state.claims[newName]=state.claims[oldName];
+      delete state.claims[oldName];
+    }
+    state.playerClaims.forEach(c=>{if(c.prize===oldName)c.prize=newName});
+    delete state.prizeAmounts[oldName];
+  }
+
+  state.prizeAmounts[newName]=amount;
+  save();
+  renderClaimTypeEditor();
+  renderPrizeOptions();
+  renderClaims();
+  renderDashboardClaims();
+  updateDashboard();
+}
+function deleteClaimType(i){
+  const name=state.prizeTypes[i];
+  if(!name)return;
+  if(!confirm(`Delete claim "${name}"?`))return;
+  state.prizeTypes.splice(i,1);
+  delete state.claims[name];
+  delete state.prizeAmounts[name];
+  save();renderClaimTypeEditor();renderPrizeOptions();renderClaims();renderDashboardClaims();updateDashboard();
+}
+function addClaimType(){
+  const input=$('#newClaimName');
+  const amountInput=$('#newClaimAmount');
+  const name=input.value.trim();
+  const amount=Number(amountInput?.value||0);
+
+  if(!name)return alert('Enter a prize name.');
+  if(!amountInput || amountInput.value==='')return alert('Enter the prize amount.');
+  if(amount<0)return alert('Prize amount cannot be negative.');
+  if(state.prizeTypes.some(x=>x.toLowerCase()===name.toLowerCase()))
+    return alert('This prize already exists.');
+
+  state.prizeTypes.push(name);
+  state.prizeAmounts[name]=amount;
+  input.value='';
+  amountInput.value='';
+  save();
+  renderClaimTypeEditor();
+  renderPrizeOptions();
+  renderClaims();
+}
+
+function renderClaims(){
+  const g=$('#claimGrid');g.innerHTML='';
+  state.prizeTypes.forEach(c=>{
+    const winner=state.claims[c];
+    const d=document.createElement('div');d.className='claim-item';
+    const amount=Number(state.prizeAmounts?.[c]||0);
+    d.innerHTML=`<strong>${c}${amount>0?` <span style="color:var(--accent2)">• ₹${amount.toLocaleString('en-IN')}</span>`:''}</strong><small>${winner?`Winner: <span class="winner">${esc(winner)}</span>`:'No winner declared'}</small>
+    <button class="btn ${winner?'':'btn-success'}" data-claim="${c}">${winner?'Clear Winner':'Declare Winner'}</button>`;
+    g.appendChild(d);
+  });
+  g.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>{
+    const c=b.dataset.claim;
+    if(state.claims[c]){delete state.claims[c];}
+    else{
+      const ticket=prompt(`Winner ticket number for ${c}:`);
+      if(!ticket)return;
+      state.claims[c]=`Ticket ${ticket.trim()}`;
+    }
+    save();renderClaims();updateDashboard();
+  });
+}
+function renderHistory(){
+  const t=$('#gameHistory');t.innerHTML='';
+  if(!state.histories.length){t.innerHTML='<tr><td colspan="5" class="muted">No saved games yet.</td></tr>';return}
+  [...state.histories].reverse().forEach(h=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(h.date)}</td><td>${esc(h.title)}</td><td>${h.called}</td><td>${h.players}</td><td>${h.claims}</td>`;
+    t.appendChild(tr);
+  });
+}
+function archiveCurrentGame(){
+  if(state.called.length||state.players.length||Object.keys(state.claims).length){
+    state.histories.push({
+      date:new Date().toLocaleString(),title:state.title,
+      ticketRate:state.ticketRate||'',
+      prizeDetails:state.prizeDetails||'',
+      called:state.called.length,players:state.players.length,
+      claims:Object.values(state.claims).filter(Boolean).length
+    });
+  }
+}
+function endGame(){
+  if(!state.started && !state.called.length)return alert('No active game to end.');
+  if(!confirm('End this game? All connected players will be logged out.'))return;
+
+  // Capture the latest rate/prize values before creating the permanent history snapshot.
+  syncGameCommercialDetails();
+
+  archiveCurrentGame();
+  saveCompletedGameToAdmin();
+  adminAuditEvent('game_ended',{
+    totalCalled:state.called.length,
+    totalPlayers:state.players.length,
+    totalClaims:(state.playerClaims||[]).length
+  });
+  stopAuto();
+  state.started=false;
+  state.paused=false;
+  save();
+  updateDashboard();
+  renderHistory();
+  alert('Game ended. Players have been logged out and history saved to Admin.');
+}
+function newGame(){
+  syncGameCommercialDetails();
+  if(!confirm('Create a new game? Called numbers, claims and player registrations will be cleared.'))return;
+  stopAuto();
+  state.called=[];
+  state.claims={};
+  state.playerClaims=[];
+  state.players=[];
+  state.paused=false;
+  state.started=false;
+  state.gameCode='TMB-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  save();
+  adminAuditEvent('new_game_created');
+  $('#gameCodeInput').value=state.gameCode;
+  updateDashboard();
+  renderPlayers();
+  renderClaims();
+  renderDashboardClaims();
+  renderClaimPlayerOptions();
+  alert(`New game created: ${state.gameCode}`);
+}
+function stopAuto(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null}
+  if($('#autoBtn')) $('#autoBtn').textContent='▶ Start Auto Call';
+  if($('#dashboardAutoBtn')) $('#dashboardAutoBtn').textContent='▶ Start Auto';
+}
+function startAuto(useDashboard=false){
+  if(autoTimer){stopAuto();return}
+  if(!state.started)return alert('Press Start Game first.');
+  const input = useDashboard ? $('#dashboardAutoSeconds') : $('#autoSeconds');
+  const sec=Math.min(120,Math.max(2,Number(input?.value)||8));
+  state.autoSeconds=sec;
+  if($('#autoSeconds')) $('#autoSeconds').value=sec;
+  if($('#dashboardAutoSeconds')) $('#dashboardAutoSeconds').value=sec;
+  save();
+  if($('#autoBtn')) $('#autoBtn').textContent='⏹ Stop Auto Call';
+  if($('#dashboardAutoBtn')) $('#dashboardAutoBtn').textContent='⏹ Stop Auto';
+  autoTimer=setInterval(()=>{
+    if(!state.paused && state.started){
+      if(state.called.length>=90){stopAuto();return;}
+      callNext();
+    }
+  },sec*1000);
+}
+document.querySelectorAll('.nav button[data-page]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.nav button[data-page]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const page=document.getElementById(b.dataset.page);
+  if(page) page.classList.add('active');
+  if(b.dataset.page==='players')renderPlayers();
+  if(b.dataset.page==='claims'){renderClaims();renderClaimTypeEditor();renderPrizeOptions();}
+  if(b.dataset.page==='history')renderHistory();
+});
+
+
+const HOST_LOGIN_KEY='tambolaHostSession';
+
+async function sha256(text){
+  const data=new TextEncoder().encode(String(text));
+  const hash=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function hostAccountKey(username){
+  return String(username||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'_');
+}
+function showHostLogin(){
+  const login=$('#hostLoginScreen');
+  if(login) login.style.display='flex';
+}
+function hideHostLogin(){
+  const login=$('#hostLoginScreen');
+  if(login) login.style.display='none';
+}
+function getHostSession(){
+  try{return JSON.parse(localStorage.getItem(HOST_LOGIN_KEY)||'null')}catch(e){return null}
+}
+
+function stopHostAccountStatusWatch(){
+  if(hostAccountStatusRef){
+    try{ hostAccountStatusRef.off(); }catch(e){}
+  }
+  hostAccountStatusRef=null;
+  hostAccountStatusKey='';
+}
+
+function forceHostLogoutDisabled(message='Your Host account has been disabled by Admin.'){
+  stopAuto();
+  stopHostAccountStatusWatch();
+
+  try{ localStorage.removeItem(HOST_LOGIN_KEY); }catch(e){}
+
+  const screen=document.getElementById('hostLoginScreen');
+  if(screen)screen.style.display='flex';
+
+  const err=document.getElementById('hostLoginError');
+  if(err)err.textContent=message;
+
+  const pass=document.getElementById('hostLoginPass');
+  if(pass)pass.value='';
+
+  // Do not continue controlling the room after Admin disables this account.
+  if(firebaseStateRef){ try{ firebaseStateRef.off(); }catch(e){} }
+  if(firebaseClaimsRef){ try{ firebaseClaimsRef.off(); }catch(e){} }
+  firebaseStateRef=null;
+  firebaseClaimsRef=null;
+  firebaseBoundCode='';
+}
+
+function watchHostAccountStatus(){
+  if(!firebaseDb)return;
+  const session=getHostSession();
+  if(!session)return;
+
+  const key=String(session.id||session.username||'').trim().toLowerCase()
+    .replace(/[^a-z0-9._-]/g,'_');
+  if(!key)return;
+
+  if(hostAccountStatusKey===key && hostAccountStatusRef)return;
+
+  stopHostAccountStatusWatch();
+  hostAccountStatusKey=key;
+  hostAccountStatusRef=firebaseDb.ref(`tambolaHostAccounts/${key}`);
+
+  hostAccountStatusRef.on('value',snap=>{
+    const account=snap.val();
+
+    // Deleted or disabled account = immediate logout.
+    if(!account || account.active===false){
+      forceHostLogoutDisabled(
+        !account
+          ? 'This Host account was removed by Admin.'
+          : 'Your Host account has been disabled by Admin.'
+      );
+      return;
+    }
+
+    // Keep the local session identity synchronized with Admin data.
+    const current=getHostSession()||{};
+    const next={
+      ...current,
+      id:String(account.id||key),
+      username:String(account.username||current.username||''),
+      name:String(account.name||current.name||account.username||'Host'),
+      active:true
+    };
+    try{ localStorage.setItem(HOST_LOGIN_KEY,JSON.stringify(next)); }catch(e){}
+  });
+}
+
+async function hostLogin(){
+  const user=($('#hostLoginUser')?.value||'').trim();
+  const pass=$('#hostLoginPass')?.value||'';
+  const err=$('#hostLoginError');
+  if(err)err.textContent='Checking login...';
+
+  if(!firebaseDb){
+    if(err)err.textContent='Firebase is not connected yet.';
+    return;
+  }
+  if(!user||!pass){
+    if(err)err.textContent='Enter username and password.';
+    return;
+  }
+
+  try{
+    const key=hostAccountKey(user);
+    const snap=await firebaseDb.ref(`tambolaHostAccounts/${key}`).once('value');
+    if(!snap.exists()){
+      if(err)err.textContent='Host account not found. Ask Admin for login credentials.';
+      return;
+    }
+    const account=snap.val();
+    if(account.active===false){
+      if(err)err.textContent='This Host account has been disabled by Admin.';
+      return;
+    }
+    const passHash=await sha256(pass);
+    if(passHash!==account.passwordHash){
+      if(err)err.textContent='Incorrect username or password.';
+      return;
+    }
+
+    const session={
+      id:key,
+      username:account.username||user,
+      name:account.name||'Host',
+      loginAt:Date.now()
+    };
+    localStorage.setItem(HOST_LOGIN_KEY,JSON.stringify(session));
+    await firebaseDb.ref(`tambolaHostAccounts/${key}`).update({
+      lastLoginAt:Date.now(),
+      lastLoginTime:new Date().toLocaleString()
+    });
+    state.host=account.name||account.username||user;
+    save();
+    adminAuditEvent('host_logged_in',{hostId:key,username:session.username,name:session.name});
+    if(err)err.textContent='';
+    hideHostLogin();
+  }catch(e){
+    console.error(e);
+    if(err)err.textContent='Login failed. Check Firebase connection and database rules.';
+  }
+}
+function hostLogout(){
+  stopHostAccountStatusWatch();
+  if(!confirm('Log out from Host dashboard?')) return;
+  const s=getHostSession();
+  if(s)adminAuditEvent('host_logged_out',{hostId:s.id,username:s.username,name:s.name});
+  localStorage.removeItem(HOST_LOGIN_KEY);
+  showHostLogin();
+}
+async function restoreHostLogin(){
+  const s=getHostSession();
+  if(!s){
+    showHostLogin();
+    return;
+  }
+  if(!firebaseDb){
+    showHostLogin();
+    return;
+  }
+  try{
+    const snap=await firebaseDb.ref(`tambolaHostAccounts/${s.id}`).once('value');
+    if(!snap.exists() || snap.val().active===false){
+      localStorage.removeItem(HOST_LOGIN_KEY);
+      showHostLogin();
+      const err=$('#hostLoginError');
+      if(err)err.textContent='Your Host login is no longer active. Contact Admin.';
+      return;
+    }
+    hideHostLogin();
+  }catch(e){
+    showHostLogin();
+  }
+}
+
+async function generateGameCodeNow(){
+  // Read the latest ticket rate entered on the dashboard.
+  syncGameCommercialDetails();
+
+  const ticketRate=Number(state.ticketRate||0);
+  if(!Number.isFinite(ticketRate) || ticketRate<=0){
+    alert('Ticket Rate is mandatory. Enter a ticket rate greater than ₹0 before generating the game code.');
+    const rateEl=$('#ticketRateInput');
+    if(rateEl){
+      rateEl.focus();
+      rateEl.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    return '';
+  }
+
+  const prizes=Array.isArray(state.prizeTypes)?state.prizeTypes:[];
+  if(!prizes.length){
+    alert('At least one prize is required before generating the game code.');
+    return '';
+  }
+
+  const missingPrizeAmounts=prizes.filter(name=>{
+    const raw=state.prizeAmounts?.[name];
+    const amount=Number(raw);
+    return raw===undefined || raw===null || raw==='' || !Number.isFinite(amount) || amount<=0;
+  });
+
+  if(missingPrizeAmounts.length){
+    alert(
+      'Prize Amount is mandatory for every prize.\n\nPlease enter an amount greater than ₹0 for:\n• ' +
+      missingPrizeAmounts.join('\n• ')
+    );
+
+    const claimsNav=document.querySelector('[data-page="claims"]');
+    if(claimsNav)claimsNav.click();
+    return '';
+  }
+
+  const totalPrizeAmount=prizes.reduce((sum,name)=>sum+Number(state.prizeAmounts?.[name]||0),0);
+
+  const confirmed=confirm(
+    `Generate a NEW game code?\n\n` +
+    `This will RESET the current game and log out all connected players.\n\n` +
+    `Ticket Rate: ₹${ticketRate.toLocaleString('en-IN')}\n` +
+    `Prizes: ${prizes.length}\n` +
+    `Total Prize Amount: ₹${totalPrizeAmount.toLocaleString('en-IN')}\n\n` +
+    `Press OK to continue.`
+  );
+
+  if(!confirmed)return '';
+
+  const oldCode=String(state.gameCode||'').trim().toUpperCase();
+
+  try{
+    // End the OLD room first. Player apps watching this room will see started=false
+    // and can immediately return to the join/login screen.
+    if(firebaseDb && oldCode){
+      const oldRoomRef=firebaseDb.ref(`tambolaRooms/${oldCode}`);
+      const endedGame={
+        ...stateForFirebase(),
+        started:false,
+        paused:false,
+        ended:true,
+        endedAt:Date.now(),
+        endReason:'new_game_code_generated'
+      };
+
+      await oldRoomRef.child('game').set(endedGame);
+      await oldRoomRef.child('claims').remove();
+    }
+  }catch(err){
+    console.error('Could not close old game room:',err);
+    alert('Could not close the current room in Firebase. New game code was not generated.\n\n'+(err?.message||err));
+    return '';
+  }
+
+  stopAuto();
+
+  // Preserve configuration needed for the next game.
+  const keepTitle=state.title||'Tambola Night';
+  const keepHost=state.host||'';
+  const keepAutoSeconds=state.autoSeconds||8;
+  const keepPrizeTypes=[...prizes];
+  const keepPrizeAmounts=JSON.parse(JSON.stringify(state.prizeAmounts||{}));
+  const keepTicketRate=String(ticketRate);
+  const keepHistories=Array.isArray(state.histories)?state.histories:[];
+
+  // Completely reset all GAME-SPECIFIC data.
+  state.called=[];
+  state.players=[];
+  state.claims={};
+  state.playerClaims=[];
+  state.paused=false;
+  state.started=false;
+  state.currentNumber=null;
+
+  // IMPORTANT: the old room briefly writes these logout/end flags back through
+  // the Firebase listener. Never carry them into the newly generated room.
+  delete state.ended;
+  delete state.endedAt;
+  delete state.endReason;
+  delete state.forcePlayerLogout;
+  delete state.gameOver;
+  delete state.completed;
+
+  // Keep host/game setup for the newly generated room.
+  state.title=keepTitle;
+  state.host=keepHost;
+  state.autoSeconds=keepAutoSeconds;
+  state.prizeTypes=keepPrizeTypes;
+  state.prizeAmounts=keepPrizeAmounts;
+  state.ticketRate=keepTicketRate;
+  state.histories=keepHistories;
+
+  state.gameCode='TMB-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  state.ended=false;
+  state.endReason='';
+  state.forcePlayerLogout=false;
+
+  // Force Firebase binding to move from the old room to the new room.
+  if(firebaseStateRef)firebaseStateRef.off();
+  if(firebaseClaimsRef)firebaseClaimsRef.off();
+  firebaseStateRef=null;
+  firebaseClaimsRef=null;
+  firebaseBoundCode='';
+
+  lastFirebaseClaimsJSON=JSON.stringify([]);
+  lastSeenClaimIds=new Set();
+
+  if($('#gameCodeInput'))$('#gameCodeInput').value=state.gameCode;
+
+  localStorage.setItem('tambolaHostState',JSON.stringify(state));
+
+  if(firebaseDb){
+    bindFirebaseGame(state.gameCode);
+    await firebaseDb.ref(`tambolaRooms/${state.gameCode}/claims`).remove().catch(()=>{});
+  }
+
+  renderEverything();
+  loadGameCommercialDetails();
+
+  adminAuditEvent('new_game_code_generated',{
+    oldGameCode:oldCode,
+    newGameCode:state.gameCode,
+    reset:true,
+    playersLoggedOut:true
+  });
+
+  showHostToast(`New clean game created — ${state.gameCode}`);
+  return state.gameCode;
+}
+
+$('#dashboardGenerateCodeBtn')?.addEventListener('click',generateGameCodeNow);
+$('#callBtn').onclick=callNext;
+$('#repeatBtn').onclick=()=>state.called.length?speak(state.called[state.called.length-1]):alert('No number called yet.');
+$('#startBtn').onclick=()=>{
+  state.started=true;
+  state.paused=false;
+  save();
+  adminAuditEvent('game_started');
+  updateDashboard();
+};
+$('#pauseBtn').onclick=()=>{
+  if(!state.started)return;
+  state.paused=!state.paused;
+  save();
+  updateDashboard();
+};
+$('#resetBtn').onclick=endGame;
+$('#newGameBtn').onclick=newGame;
+$('#addPlayer').onclick=()=>{
+  const ticket=generateUniqueTicketNumber();
+  state.players.unshift({name:'',ticket,status:'unbooked'});
+  save();
+  renderPlayers();
+  renderClaimPlayerOptions();
+  updateDashboard();
+
+  // Immediately show the newly generated ticket.
+  showTicket(0);
+};
+$('#ticketStatusFilter')?.addEventListener('change',renderPlayers);
+$('#printUnbookedBtn')?.addEventListener('click',printAllUnbookedTickets);
+
+$('#saveSettings').onclick=()=>{
+  state.title=$('#settingTitle').value.trim()||'Tambola Night';
+  state.host=$('#hostName').value.trim();
+  state.autoSeconds=Math.min(120,Math.max(2,Number($('#autoSeconds').value)||8));
+  const code=$('#gameCodeInput').value.trim().toUpperCase();
+  if(code) state.gameCode=code;
+  if($('#dashboardAutoSeconds')) $('#dashboardAutoSeconds').value=state.autoSeconds;
+  save();updateDashboard();alert('Settings saved.');
+};
+$('#recordClaimBtn').onclick=()=>{
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  const claimsNav=document.querySelector('.nav button[data-page="claims"]');
+  if(claimsNav)claimsNav.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  $('#claims').classList.add('active');
+  renderClaimPlayerOptions();
+  renderClaimTypeEditor();
+  renderPrizeOptions();
+  renderClaims();
+  setTimeout(()=>$('#claimPlayerSelect')?.focus(),0);
+};
+$('#addClaimType').onclick=addClaimType;
+$('#newClaimName').addEventListener('keydown',e=>{if(e.key==='Enter')addClaimType()});
+$('#submitPlayerClaim').onclick=()=>{
+  const idx=Number($('#claimPlayerSelect').value);
+  const prize=$('#claimPrizeSelect').value;
+  if($('#claimPlayerSelect').value==='')return alert('Select a player.');
+  addPlayerClaim(idx,prize);
+  $('#claimPrizeSelect').value='';
+};
+
+$('#autoBtn').onclick=()=>startAuto(false);
+$('#dashboardAutoBtn').onclick=()=>startAuto(true);
+$('#generateGameCode').onclick=generateGameCodeNow;
+document.addEventListener('DOMContentLoaded',()=>{
+  const closeTicketModal=document.getElementById('closeTicketModal');
+  const ticketModal=document.getElementById('ticketModal');
+
+  if(closeTicketModal && ticketModal){
+    closeTicketModal.onclick=()=>ticketModal.classList.remove('show');
+    ticketModal.onclick=e=>{
+      if(e.target.id==='ticketModal')ticketModal.classList.remove('show');
+    };
+  }
+});
+$('#settingTitle').value=state.title;
+$('#hostName').value=state.host||'';
+$('#autoSeconds').value=state.autoSeconds||8;
+$('#dashboardAutoSeconds').value=state.autoSeconds||8;
+$('#gameCodeInput').value=state.gameCode||'';
+(state.players||[]).forEach(p=>{if(!p.status)p.status='unbooked'});
+updateDashboard();renderPlayers();renderClaims();renderHistory();renderClaimPlayerOptions();renderPrizeOptions();renderClaimTypeEditor();renderDashboardClaims();updateHostStatusBanner();
+
+function updateHostStatusBanner(){
+  const text=document.getElementById('hostStatusText');
+  const banner=document.getElementById('hostStatusBanner');
+  if(!text||!banner)return;
+  banner.classList.remove('live','paused','ended');
+  if(state.started && state.paused){text.textContent='Game paused';banner.classList.add('paused');}
+  else if(state.started){text.textContent='Game live — numbers can be called';banner.classList.add('live');}
+  else if((state.called||[]).length){text.textContent='Game ended — generate a new game when ready';banner.classList.add('ended');}
+  else{text.textContent='Ready for setup';}
+}
+
+window.addEventListener('beforeunload',e=>{
+  if(state && state.started){
+    e.preventDefault();
+    e.returnValue='';
+  }
+});
+
+
+const gameStateEl=document.getElementById('gameState');
+if(gameStateEl){new MutationObserver(updateHostStatusBanner).observe(gameStateEl,{childList:true,subtree:true,characterData:true});}
+$('#hostLoginBtn')?.addEventListener('click',hostLogin);
+$('#hostLoginPass')?.addEventListener('keydown',e=>{if(e.key==='Enter')hostLogin();});
+$('#hostLoginUser')?.addEventListener('keydown',e=>{if(e.key==='Enter')hostLogin();});
+$('#hostLogoutBtn')?.addEventListener('click',hostLogout);
+initFirebase();
+setTimeout(restoreHostLogin,500);
+</script>
+
+<div class="modal" id="ticketModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h3 style="margin:0">Player Ticket</h3>
+        <div class="muted" id="ticketMeta"></div>
+      </div>
+      <button class="btn" id="closeTicketModal">✕ Close</button>
+    </div>
+    <div class="ticket-card">
+      <div class="ticket-title" id="ticketOwner"></div>
+      <table class="tambola-ticket"><tbody id="ticketBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+
+
+</body>
+</html>
