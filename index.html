@@ -624,6 +624,41 @@ function claimsFromFirebase(v){
   if(Array.isArray(v))return v.filter(Boolean);
   return Object.values(v).filter(Boolean).sort((a,b)=>(Number(b.id)||0)-(Number(a.id)||0));
 }
+
+function prizeFirebaseKey(prize){
+  const s=String(prize??'').trim();
+  return Array.from(s)
+    .map(ch=>ch.charCodeAt(0).toString(16).padStart(4,'0'))
+    .join('') || 'prize';
+}
+
+function setPrizeClaimLock(claim,status='pending'){
+  if(!firebaseDb||!state.gameCode||!claim?.prize)return Promise.resolve();
+  return firebaseDb.ref(
+    `tambolaRooms/${state.gameCode}/prizeLocks/${prizeFirebaseKey(claim.prize)}`
+  ).set({
+    prize:String(claim.prize),
+    ticket:String(claim.ticket||''),
+    claimId:String(claim.id||''),
+    status:String(status||'pending'),
+    lockedAt:Number(claim.id)||Date.now()
+  }).catch(err=>console.warn('Prize lock write failed:',err));
+}
+
+function clearPrizeClaimLock(claim){
+  if(!firebaseDb||!state.gameCode||!claim?.prize)return Promise.resolve();
+  const ref=firebaseDb.ref(
+    `tambolaRooms/${state.gameCode}/prizeLocks/${prizeFirebaseKey(claim.prize)}`
+  );
+
+  return ref.transaction(current=>{
+    // Only clear the lock for this claim/ticket. Never remove another winner's lock.
+    if(!current)return null;
+    const sameClaim=String(current.claimId||'')===String(claim.id||'');
+    const sameTicket=String(current.ticket||'')===String(claim.ticket||'');
+    return (sameClaim||sameTicket) ? null : current;
+  },undefined,false).catch(err=>console.warn('Prize lock clear failed:',err));
+}
 function normalizeStateAfterRemote(remote){
   const incomingClaims=state.playerClaims||[];
   state={...state,...(remote||{})};
@@ -703,6 +738,7 @@ function bindFirebaseGame(code){
 
         if(fromPlayer){
           showHostToast(`🏆 Ticket ${c.ticket} claimed ${c.prize} — GAME PAUSED`);
+          setPrizeClaimLock(c,'pending');
           if(!newPlayerClaim)newPlayerClaim=c;
         }else{
           showHostToast(`Ticket ${c.ticket} claimed ${c.prize} — ${c.validationLabel||'Needs review'}`);
@@ -959,16 +995,23 @@ function addPlayerClaim(playerIndex, prize){
   const p=state.players[playerIndex];
   if(!p)return alert('Please select a valid player.');
   if(!prize)return alert('Please select a prize.');
-  const duplicate=state.playerClaims.find(c=>c.status!=='rejected' && c.ticket===p.ticket && c.prize===prize);
-  if(duplicate)return alert('This player already has an active claim for this prize.');
-  state.playerClaims.unshift({
+  const duplicate=state.playerClaims.find(c=>
+    String(c?.status||'pending').toLowerCase()!=='rejected' &&
+    String(c?.prize||'').trim().toLowerCase()===String(prize).trim().toLowerCase()
+  );
+  if(duplicate)return alert(`${prize} has already been claimed by Ticket ${duplicate.ticket}.`);
+
+  const claim={
     id:Date.now()+Math.floor(Math.random()*1000),
     player:'',
     ticket:p.ticket,
     prize,
     status:'pending',
-    time:new Date().toLocaleString()
-  });
+    time:new Date().toLocaleString(),
+    source:'host'
+  };
+  state.playerClaims.unshift(claim);
+  setPrizeClaimLock(claim,'pending');
   save();renderDashboardClaims();updateDashboard();
 }
 
@@ -1074,16 +1117,44 @@ function renderDashboardClaims(){
   box.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>reviewPlayerClaim(Number(b.dataset.reject),'rejected')));
   box.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>removePlayerClaim(Number(b.dataset.remove))));
 }
-function reviewPlayerClaim(id,status){
+async function reviewPlayerClaim(id,status){
   const c=state.playerClaims.find(x=>x.id===id);
   if(!c)return;
+
   c.status=status;
-  if(status==='approved')state.claims[c.prize]=`Ticket ${c.ticket}`;
-  save();renderDashboardClaims();renderClaims();updateDashboard();
+
+  if(status==='approved'){
+    state.claims[c.prize]=`Ticket ${c.ticket}`;
+    await setPrizeClaimLock(c,'approved');
+  }else if(status==='rejected'){
+    // Rejected claim re-opens this prize for all active Players.
+    await clearPrizeClaimLock(c);
+  }
+
+  save();
+  renderDashboardClaims();
+  renderClaims();
+  updateDashboard();
 }
-function removePlayerClaim(id){
+async function removePlayerClaim(id){
+  const c=state.playerClaims.find(x=>x.id===id);
+  if(!c)return;
+
   state.playerClaims=state.playerClaims.filter(x=>x.id!==id);
-  save();renderDashboardClaims();updateDashboard();
+
+  const anotherActive=state.playerClaims.find(x=>
+    String(x?.prize||'').trim().toLowerCase()===String(c.prize||'').trim().toLowerCase() &&
+    String(x?.status||'pending').toLowerCase()!=='rejected'
+  );
+
+  if(!anotherActive){
+    await clearPrizeClaimLock(c);
+  }
+
+  save();
+  renderDashboardClaims();
+  renderClaims();
+  updateDashboard();
 }
 
 function updateDashboard(){
