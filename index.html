@@ -690,15 +690,48 @@ function bindFirebaseGame(code){
 
   firebaseClaimsRef.on('value',snap=>{
     const incoming=claimsFromFirebase(snap.val());
+    let newPlayerClaim=null;
+
     incoming.forEach(c=>{
       const key=String(c.id);
       if(!lastSeenClaimIds.has(key)){
-        showHostToast(`Ticket ${c.ticket} claimed ${c.prize} — ${c.validationLabel||'Needs review'}`);
         lastSeenClaimIds.add(key);
+
+        const fromPlayer=String(c?.source||'').toLowerCase()==='player'
+          || c?.validationKnown!==undefined
+          || c?.automatic===true;
+
+        if(fromPlayer){
+          showHostToast(`🏆 Ticket ${c.ticket} claimed ${c.prize} — GAME PAUSED`);
+          if(!newPlayerClaim)newPlayerClaim=c;
+        }else{
+          showHostToast(`Ticket ${c.ticket} claimed ${c.prize} — ${c.validationLabel||'Needs review'}`);
+        }
       }
     });
+
     state.playerClaims=incoming;
     lastFirebaseClaimsJSON=JSON.stringify(state.playerClaims);
+
+    // A claim submitted by a Player immediately pauses number calling.
+    if(newPlayerClaim && state.started && !state.paused){
+      stopAuto();
+      state.paused=true;
+
+      adminAuditEvent('game_auto_paused_for_claim',{
+        ticket:String(newPlayerClaim.ticket||''),
+        prize:String(newPlayerClaim.prize||''),
+        claimId:String(newPlayerClaim.id||'')
+      });
+
+      // Publish the paused state immediately to every Player.
+      if(firebaseStateRef){
+        firebaseStateRef.set(stateForFirebase()).catch(err=>{
+          console.error('Could not publish auto-pause state:',err);
+        });
+      }
+    }
+
     localStorage.setItem('tambolaHostState',JSON.stringify(state));
     renderDashboardClaims();
     renderClaims();
@@ -1111,7 +1144,10 @@ function printAllUnbookedTickets(){
   if(!unbooked.length)return alert('There are no unbooked tickets to print.');
 
   const ticketHtml=unbooked.map((p,index)=>{
-    const ticket=generateTicket(String(p.ticket));
+    if(!Array.isArray(p.ticketData) || p.ticketData.length!==3){
+      p.ticketData=generateTicket(String(p.ticket));
+    }
+    const ticket=p.ticketData;
     const rows=ticket.map(row=>`<tr>${row.map(v=>`<td class="${v===null?'blank':''}">${v===null?'':v}</td>`).join('')}</tr>`).join('');
     return `
       <section class="print-ticket">
@@ -1280,7 +1316,13 @@ function generateTicket(seedText){
 window.showTicket=i=>{
   const p=state.players[i];
   if(!p)return;
-  const ticket=generateTicket(String(p.ticket));
+
+  // A ticket is generated only once. Never regenerate it on pause/resume/render.
+  if(!Array.isArray(p.ticketData) || p.ticketData.length!==3){
+    p.ticketData=generateTicket(String(p.ticket));
+    save();
+  }
+  const ticket=p.ticketData;
   $('#ticketOwner').textContent=`Ticket ${p.ticket}`;
   $('#ticketMeta').textContent=`Ticket No: ${p.ticket}`;
   const body=$('#ticketBody'); body.innerHTML='';
@@ -1308,7 +1350,9 @@ window.showTicketByClaimId=id=>{
 
   const ticket=(Array.isArray(claim.ticketData) && claim.ticketData.length===3)
     ? claim.ticketData
-    : generateTicket(String(p.ticket));
+    : ((Array.isArray(p.ticketData) && p.ticketData.length===3)
+        ? p.ticketData
+        : generateTicket(String(p.ticket)));
 
   const manualMarked=new Set((claim.markedNumbers||[]).map(Number));
 
@@ -1925,7 +1969,8 @@ $('#resetBtn').onclick=endGame;
 $('#newGameBtn').onclick=newGame;
 $('#addPlayer').onclick=()=>{
   const ticket=generateUniqueTicketNumber();
-  state.players.unshift({name:'',ticket,status:'unbooked'});
+  const ticketData=generateTicket(String(ticket));
+  state.players.unshift({name:'',ticket,status:'unbooked',ticketData});
   save();
   renderPlayers();
   renderClaimPlayerOptions();
@@ -1987,7 +2032,20 @@ $('#hostName').value=state.host||'';
 $('#autoSeconds').value=state.autoSeconds||8;
 $('#dashboardAutoSeconds').value=state.autoSeconds||8;
 $('#gameCodeInput').value=state.gameCode||'';
-(state.players||[]).forEach(p=>{if(!p.status)p.status='unbooked'});
+let ticketDataBackfilled=false;
+(state.players||[]).forEach(p=>{
+  if(!p.status)p.status='unbooked';
+
+  // Backfill old tickets once so their exact matrices become permanent.
+  if(!Array.isArray(p.ticketData) || p.ticketData.length!==3){
+    p.ticketData=generateTicket(String(p.ticket));
+    ticketDataBackfilled=true;
+  }
+});
+if(ticketDataBackfilled){
+  localStorage.setItem('tambolaHostState',JSON.stringify(state));
+  syncFirebase();
+}
 updateDashboard();renderPlayers();renderClaims();renderHistory();renderClaimPlayerOptions();renderPrizeOptions();renderClaimTypeEditor();renderDashboardClaims();updateHostStatusBanner();
 
 function updateHostStatusBanner(){
